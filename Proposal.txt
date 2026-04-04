@@ -1,0 +1,60 @@
+DSS5104 — Project Proposal
+
+========
+Datasets
+========
+
+I picked three datasets to cover different forecasting scenarios:
+
+- M4 (Univariate): https://www.kaggle.com/datasets/yogesh94/m4-forecasting-competition-dataset/data
+100k series across mixed domains (finance, demographics, industry, etc.). 
+This is the standard M-competition benchmark, so we can compare our results against published numbers. 
+We need at least one univariate dataset, and M4 is the best choice for diversity and validation.
+
+- M5 (Hierarchical): https://www.kaggle.com/competitions/m5-forecasting-accuracy 
+Walmart retail sales data with hierarchical structure (product/store/state levels). 
+Real-world, messy, and large-scale, good for testing whether deep models can handle practical retail forecasting.
+
+- Traffic (Multivariate): https://zenodo.org/records/4656132
+San Francisco road occupancy rates. 
+Regular sampling, well-behaved data, gives us a clean multivariate benchmark to test how models handle multiple correlated series.
+
+======
+Models
+======
+
+The additional model I choose is:
+
+- TimesNet: 
+Converts 1D time series into 2D tensors using FFT to capture multi-periodicity, then applies 2D CNNs. 
+I chose this because it gives us maximum architectural diversity: we now have Transformer, RNN, MLP, and CNN approaches to compare.
+
+==================
+Experimental Setup
+==================
+
+- Walk-Forward Validation: 
+Sliding window approach. 
+A fixed-size training window moves forward over time. 
+This tests whether models can adapt to recent patterns rather than just memorizing long history.
+
+- Metrics: 
+MAE (mean absolute error) as the primary metric, plus MASE (mean absolute scaled error) as a scale-free metric. 
+MASE is also the official M4 competition metric.
+
+- Random Seeds: 
+3 seeds per model. We report mean ± standard deviation for all results.
+
+=========
+Framework
+=========
+
+Use the Nixtla ecosystem, which covers almost everything under one consistent API:
+
+- neuralforecast: all deep learning models (PatchTST, N-BEATS, TiDE, DeepAR, TimesNet, DLinear).
+
+- statsforecast: classical baselines (Seasonal Naive, AutoARIMA).
+
+- mlforecast: LightGBM with lag features.
+
+All built on Python + PyTorch as the backend.
