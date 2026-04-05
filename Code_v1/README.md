@@ -1,8 +1,11 @@
-# DSS5104 CA2 — Deep Learning for Time-Series Forecasting
+# DSS5104 CA2 — Deep Learning for Time-Series Forecasting (v1)
+
+> **Note:** This is the initial implementation (`Code_v1`), preserved for reference.
+> The primary, revised implementation is in `Code_v2/`. Use `Code_v2` for all final runs.
 
 ## Overview
 
-This repository benchmarks **9 forecasting models** across **3 datasets** using a rigorous walk-forward evaluation protocol with 5 random seeds.
+This folder contains the initial benchmarking code for **9 forecasting models** across **3 datasets** using a walk-forward evaluation protocol. Models are grouped by type rather than one file per model (see `Code_v2/` for the per-model pipeline structure).
 
 ### Models
 
@@ -45,13 +48,13 @@ Place the raw data in `../Data/`:
 
 **Smoke test** (quick validation, ~5 min):
 ```bash
-cd Code
+cd Code_v1
 python runners/run_all.py --smoke-test
 ```
 
 **Full run** (~6-11 GPU hours):
 ```bash
-cd Code
+cd Code_v1
 python runners/run_all.py
 ```
 
@@ -69,12 +72,12 @@ python analysis/aggregate_results.py
 python analysis/plot_results.py
 ```
 
-Results are saved to `Code/results/`.
+Results are saved to `Code_v1/results/`.
 
 ## Project Structure
 
 ```
-Code/
+Code_v1/
 ├── config.py               # Central configuration
 ├── requirements.txt         # Dependencies
 ├── data_prep/               # Dataset loading & formatting
@@ -109,7 +112,7 @@ Code/
 
 - **Walk-forward validation**: Sliding window with fixed-size training windows
 - **Metrics**: MAE (primary) + MASE (scale-free, official M4 metric)
-- **Seeds**: 5 random seeds per DL model; mean ± std reported
+- **Seeds**: 3 random seeds [42, 123, 456] per ML/DL model; mean ± std reported
 - **Preprocessing**: Per-series standard normalization (handled by neuralforecast)
 
 ## Hardware

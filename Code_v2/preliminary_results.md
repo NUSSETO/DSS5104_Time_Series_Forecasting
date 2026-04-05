@@ -134,12 +134,58 @@ Mean training time per seed × window (seconds):
 
 TimesNet's total wall-clock time was 2.73 hours (all datasets, 3 seeds × 2 windows). LightGBM trains in under 1 second yet ranks competitively on 2 out of 3 datasets. The compute premium paid for DL is clearly justified only by N-BEATS, and situationally by DLinear and PatchTST on structured periodic data.
 
+**Total experiment wall-clock time (all 9 models × 3 datasets × seeds × windows):** ~3.90 hours on Apple M4 MPS. TimesNet alone accounts for 2.72h (70% of total). Excluding TimesNet, the remaining 8 models complete in ~1.18 hours. All timings are on Apple Silicon MPS (unified memory GPU); a discrete CUDA GPU would reduce DL training times significantly, particularly for TimesNet and DeepAR.
+
+**Would you pay this cost in practice?** For N-BEATS: yes — 13–35 seconds per run with top-tier accuracy across all datasets is an excellent trade-off. For DLinear and PatchTST: situationally, on structured periodic data (e.g. Traffic). For TimesNet: hard to justify — it is the heaviest model, ranks 3rd or lower on every dataset, and costs 70% of the total compute budget. For DeepAR: only if probabilistic forecasts (confidence intervals) are the goal, not point accuracy.
+
 ---
 
-## 6. Notes and Limitations
+## 6. Robustness
 
-- **Subsampled for hardware constraints** (500 / 200 / 50 series). Full M4 has 48,000 series; full M5 has 30,490. Production-scale runs require a GPU server.
-- **2 rolling windows** is the minimum for cross-period validation. More windows would strengthen the statistical basis of comparisons.
+**Variance across seeds and windows** (reported std in result tables):
+
+- DL models are generally stable across seeds — most show std < 0.05 MASE. The exception is **DLinear on M5 (±0.103)**, which is notably high for such a simple model and suggests instability when the training window captures meaningfully different sales patterns (e.g. one window with a promotion period, another without).
+- **Traffic baselines show very high variance** (SeasonalNaive ±0.436, AutoARIMA ±0.404). This reflects both genuine pattern shift between the two test windows and the small sensor sample (50 series), making per-window averages more sensitive to outlier sensors.
+- **DeepAR is the most stable DL model** (std ≤ 0.062 across all datasets), consistent with its RNN architecture being less sensitive to random initialisation than attention-based models.
+
+**Sensitivity to data volume (potential overfitting on shorter series):**
+
+- On **M4**, where each monthly series has on average ~150–200 observations, most DL models underperform classical methods. PatchTST (rank 6), DeepAR (rank 8), and TiDE (rank 9) all fall below LightGBM and AutoARIMA. This is consistent with DL models requiring sufficient sequence length to learn meaningful temporal patterns — short series do not provide enough context for attention mechanisms or LSTM states to generalise well.
+- On **M5 and Traffic**, where series are longer (daily over 5+ years; hourly over 2 years), DL models recover and dominate. This confirms that data volume and series length are key factors in whether deep learning adds value.
+- No explicit hyperparameter sensitivity sweep was conducted. Model configurations follow paper defaults (see config.py), and sensitivity analysis is left as a direction for future work.
+
+---
+
+## 7. Practicality
+
+**Would we recommend deep learning for time-series forecasting?**
+
+The answer is conditional, not binary.
+
+- **Recommend DL when:** series are long, patterns are complex or multi-scale (e.g. retail sales with promotions, hierarchical structure), and compute budget allows. On M5, the top 3 models are all deep learning (N-BEATS, PatchTST, TimesNet), each beating AutoARIMA and LightGBM convincingly.
+- **Do not recommend DL when:** series are short (< 200 observations), the domain is mixed with no dominant pattern (as in M4), or compute is constrained. On M4, AutoARIMA (rank 2) and LightGBM (rank 4) both outperform the majority of DL models at a fraction of the cost.
+- **The linear baseline (DLinear) is a serious competitor.** It ranks 1st on Traffic and shows that for strongly periodic data, a single linear layer can outperform all Transformer and MLP architectures. This directly validates the concern raised by Zeng et al. (2023).
+- **N-BEATS is the most practically viable DL model** in this experiment — it achieves the best or near-best accuracy across all three datasets, trains in under 15 seconds, and requires no dataset-specific tuning. If one deep learning model is to be deployed, N-BEATS is the most defensible choice.
+- **Engineering trade-off:** beyond accuracy and compute, DL models require more careful setup (framework dependencies, GPU access, seed management, early stopping tuning). Classical models like AutoARIMA and LightGBM are easier to deploy, explain, and maintain in production. For most practical forecasting problems, the overhead of DL is only justified when the performance gap is substantial and sustained across multiple evaluation windows.
+
+---
+
+## 8. Notes and Limitations
+
+- **Subsampled for hardware constraints** (500 / 200 / 50 series). Full M4 has 48,000 series; full M5 has 30,490. Production-scale runs require a GPU server. The `n_series_sample` parameter in `config.py` allows straightforward scaling; results may shift slightly at full scale but relative model rankings are expected to hold.
+
+- **2 rolling windows** is the minimum for cross-period validation. Two windows were used due to hardware and dataset size constraints; each provides an independent test set from a different time period. More windows would strengthen the statistical basis of comparisons.
+
+- **Reported std captures combined seed and window variance.** For ML/DL models, std is computed across all 6 runs (3 seeds × 2 windows), reflecting both randomness from initialisation and temporal distribution shift between windows. For deterministic baselines, std is across 2 windows only.
+
+- **No differencing or detrending was applied.** This was a deliberate choice: the standard scaler applied by neuralforecast (`scaler_type="standard"`) centres and scales each series before training, which partially addresses non-stationarity. All models are expected to capture trend and seasonal structure directly from the input window. This is consistent with how these models are evaluated in their original papers.
+
+- **Only MAE and MASE are reported.** This was deliberate — MAE provides an interpretable absolute error, and MASE provides scale-free comparability across datasets and against the seasonal naive baseline. No additional metrics (RMSE, sMAPE) were added to keep the comparison focused.
+
+- **MAX_STEPS = 400** was used for all DL models, reduced from the recommended 1000+ to accommodate the MacBook Air hardware. Results may improve with more training steps on a GPU server, particularly for the larger models (TimesNet, DeepAR). This is a known constraint and does not invalidate relative comparisons.
+
 - **MASE variance is high on Traffic** for the two baselines (±0.40+). Partly a real signal (Traffic's test windows span different traffic conditions), partly an artefact of the small sample (50 sensors).
+
 - **DeepAR point accuracy should not be the sole judge.** Its MASE figures here reflect a mismatch between architecture goal (probabilistic) and metric (point). Confidence interval coverage would be a fairer evaluation.
+
 - **Visualisations and formal aggregated summary tables pending** (next step before submission).

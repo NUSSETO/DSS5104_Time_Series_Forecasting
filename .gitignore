@@ -28,3 +28,7 @@ Data/
 # IDE
 .vscode/
 .idea/
+
+# course related
+Instruction.txt
+Proposal.txt
