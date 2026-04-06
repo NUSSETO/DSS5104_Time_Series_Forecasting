@@ -1,3 +1,0 @@
-dataset,model,seed,window,mae_mean,mase_mean,train_time_sec,peak_gpu_mb
-M5,SeasonalNaive,N/A,1,1.1026785714285714,1.232722639742414,5.594313875015359,0.0
-M5,SeasonalNaive,N/A,2,1.0976785714285713,1.2991557871464736,5.863670291000744,0.0

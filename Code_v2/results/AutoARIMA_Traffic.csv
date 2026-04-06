@@ -1,3 +1,0 @@
-dataset,model,seed,window,mae_mean,mase_mean,train_time_sec,peak_gpu_mb
-Traffic,AutoARIMA,N/A,1,0.00825806476624752,0.5876482398320185,447.24648058300954,0.0
-Traffic,AutoARIMA,N/A,2,0.015153150026936877,1.158930147006315,558.2548722499923,0.0

@@ -14,10 +14,9 @@ from pathlib import Path
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-ROOT = Path(__file__).resolve().parents[1]  # CA2/
+ROOT = Path(__file__).resolve().parent      # CA2/
 DATA_DIR = ROOT / "Data"
-CODE_DIR = Path(__file__).resolve().parent  # Code_v2/ (always correct regardless of directory name)
-RESULTS_DIR = CODE_DIR / "results"
+RESULTS_DIR = ROOT / "results"
 
 # ─── Random Seeds (3 seeds) ──────────────────────────────────────────────────
 SEEDS = [42, 123, 456]

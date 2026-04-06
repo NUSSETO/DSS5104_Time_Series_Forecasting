@@ -7,6 +7,9 @@ import sys
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
 from models import ModelSpec
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 
 def build(season_length: int, freq: str) -> ModelSpec:
     """Build a StatsForecast object with AutoARIMA.
